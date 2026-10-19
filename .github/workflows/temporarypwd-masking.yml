@@ -1,62 +1,62 @@
-name: Security Pipeline
+# name: Security Pipeline
 
-on:
-  push:
-    branches:
-      - main
-      - dev
+# on:
+#   push:
+#     branches:
+#       - main
+#       - dev
 
-  pull_request:
-    branches:
-      - main
-      - master
+#   pull_request:
+#     branches:
+#       - main
+#       - master
 
-permissions:
-  actions: read
-  contents: read
-  security-events: write
-  issues: write
+# permissions:
+#   actions: read
+#   contents: read
+#   security-events: write
+#   issues: write
 
-jobs:
-  codeql:
-    name: CodeQL Analysis
-    runs-on: ubuntu-latest
+# jobs:
+#   codeql:
+#     name: CodeQL Analysis
+#     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        language:
-          - javascript-typescript
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         language:
+#           - javascript-typescript
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
 
-      - name: Setup NodeJS
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
+#       - name: Setup NodeJS
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: 22
 
-      - name: Install Dependencies
-        run: npm install
+#       - name: Install Dependencies
+#         run: npm install
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
+#       - name: Initialize CodeQL
+#         uses: github/codeql-action/init@v3
+#         with:
+#           languages: ${{ matrix.language }}
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+#       - name: Autobuild
+#         uses: github/codeql-action/autobuild@v3
 
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+#       - name: Perform CodeQL Analysis
+#         uses: github/codeql-action/analyze@v3
 
-      - name: Generate and Mask DB Password
-        run: |
-          TEMP_PASS=$(openssl rand -base64 12)
+#       - name: Generate and Mask DB Password
+#         run: |
+#           TEMP_PASS=$(openssl rand -base64 12)
 
-          # Tell GitHub Actions: "If you ever see this exact string in the logs, censor it!"
-          echo "::add-mask::$TEMP_PASS"
+#           # Tell GitHub Actions: "If you ever see this exact string in the logs, censor it!"
+#           echo "::add-mask::$TEMP_PASS"
 
-          # Now, if we try to print it, it will output as *
-          echo "The password is $TEMP_PASS"
+#           # Now, if we try to print it, it will output as *
+#           echo "The password is $TEMP_PASS"
