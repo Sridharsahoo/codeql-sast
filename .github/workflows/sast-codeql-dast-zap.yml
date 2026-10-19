@@ -59,18 +59,11 @@ jobs:
           echo "::add-mask::$TEMP_PASS"
 
           # Now, if we try to print it, it will output as *
-          echo "The password is $TEMP_PASS"
+          echo "The pasord is $TEMP_PASS"
 
 
 
-
-
-
-
-
-          
-
-# name: CodeQL
+  name: CodeQL
 
 # on:
 #   push:
