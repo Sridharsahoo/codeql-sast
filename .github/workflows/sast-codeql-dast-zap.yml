@@ -63,7 +63,7 @@ jobs:
 
 
 
-  name: CodeQL
+# name: CodeQL
 
 # on:
 #   push:
