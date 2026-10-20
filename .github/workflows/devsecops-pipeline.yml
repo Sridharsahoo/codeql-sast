@@ -1,0 +1,97 @@
+on:
+  push:
+    branches:
+      - master
+
+  pull_request:
+    branches:
+      - master
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+# STRICT LEAST PRIVILEGE
+permissions:
+  contents: read
+  security-events: write
+  id-token: write
+  packages: write
+
+jobs:
+  security_audit:
+    name: CodeQL SAST Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: actions
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+
+  build_and_package:
+    name: Build Docker Image
+    needs: security_audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Setup Docker Buildx (required for advanced caching)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.10.0
+
+      # Generate and mask a temporary DB password to demonstrate secret masking
+      - name: Generate and Mask Temporary DB Password
+        run: |
+          TEMP_PASS=$(openssl rand -base64 12)
+          echo "::add-mask::$TEMP_PASS"
+          echo "DB_TEMP_PASS=$TEMP_PASS" >> $GITHUB_ENV
+
+      # Build with intelligent Docker layer caching
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: rahamshaik
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Export Container
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: rahamshaik/gabr1:latest
+
+          cache-from: type=registry,ref=rahamshaik/gabr1:latest
+          cache-to: type=registry,ref=rahamshaik/gabr1:buildcache,mode=max
+
+  deploy_production:
+    name: Deploy via OIDC
+    needs: build_and_package
+
+    # Only run on the main branch, not on Pull Requests
+    if: github.ref == 'refs/heads/master'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # OIDC: Authenticate to AWS without any static password
+      - name: Configure AWS Credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::362521343592:role/github-role
+          aws-region: us-east-1
+
+      - name: Deploy to Cloud
+        run: |
+          echo "Identity verified securely via OIDC."
+          echo "Deploying the secure, audited, and cached container!"
